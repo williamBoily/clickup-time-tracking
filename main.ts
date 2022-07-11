@@ -18,20 +18,37 @@ function printTimeRange(start: Date, end: Date, taskName: string) {
 		hour12: false
 	  });
 
-	const durationInMinutes = (end.valueOf() - start.valueOf()) / 1000 / 60;
+	const duration = (end.valueOf() - start.valueOf());
 
 	// equivalent : start.toLocaleTimeString('UTC', {hour12: false})
 	console.log(`+-- ${dateFormatter.format(start)}`);
-	console.log('|' + ' '.repeat(13) + `(${durationInMinutes.toFixed(0)} min) ` + taskName);
+	console.log('|' + ' '.repeat(13) + `${formatDuration(duration)} ` + taskName);
 	console.log(`+-- ${dateFormatter.format(end)}`);
+}
+
+function formatDuration(durationInMs: number){
+	const dateForDuration = new Date(durationInMs);
+	const hh = dateForDuration.getUTCHours().toString();
+	const mm = dateForDuration.getUTCMinutes().toString().padStart(2, '0');
+	const ss = dateForDuration.getUTCSeconds().toString().padStart(2, '0');
+	return `${hh}:${mm}:${ss}`;
+}
+
+function printTotalTime(durationInMs: number) {
+	const duration = formatDuration(durationInMs);
+	console.log(`total time: ${duration}`);
 }
 
 
 (async () => {
 	try {
-		const startDate = new Date();
+		let totalTimeInMs = 0;
+		const myArgs = process.argv.slice(2);
+		const dateArgument = myArgs?.[0];
+
+		const startDate = dateArgument ? new Date(dateArgument) : new Date();
 		startDate.setHours(0,0,0,0);
-		const endDate = new Date();
+		const endDate = dateArgument ? new Date(dateArgument) : new Date();
 		endDate.setHours(23,59,59,999);
 
 		const clickup = new ClickupClient(process.env.CLICKUP_API_PERSONNAL_TOKEN ?? '');
@@ -40,8 +57,11 @@ function printTimeRange(start: Date, end: Date, taskName: string) {
 		result.data.forEach(timeEntry => {
 			const start = new Date(parseInt(timeEntry.start, 10));
 			const end = new Date(parseInt(timeEntry.end, 10));
-			printTimeRange(start, end, timeEntry.task.name);
+			totalTimeInMs += (end.valueOf() - start.valueOf());
+			printTimeRange(start, end, timeEntry.task?.name ?? 'no task linked');
 		});
+
+		printTotalTime(totalTimeInMs);
 		
 	} catch (error) {
 		console.error('Script Error. Something went wrong...');
