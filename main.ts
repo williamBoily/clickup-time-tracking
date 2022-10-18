@@ -46,10 +46,10 @@ function printTotalTime(durationInMs: number) {
 		const myArgs = process.argv.slice(2);
 		const dateArgument = myArgs?.[0];
 
-		const startDate = dateArgument ? new Date(dateArgument) : new Date();
-		startDate.setHours(0,0,0,0);
-		const endDate = dateArgument ? new Date(dateArgument) : new Date();
-		endDate.setHours(23,59,59,999);
+		// when passing the time with the date, the local time zone is used.
+		// if only the date, UTC is used.
+		const startDate = dateArgument ? new Date(dateArgument.concat('T00:00:00')) : new Date();
+		const endDate = dateArgument ? new Date(dateArgument.concat('T23:59:59')) : new Date();
 
 		const clickup = new ClickupClient(process.env.CLICKUP_API_PERSONNAL_TOKEN ?? '');
 		const result = await clickup.getTimeEntriesWithinDateRange(process.env.CLICKUP_TEAM_ID ?? '', {start_date: startDate.valueOf(), end_date: endDate.valueOf()});
