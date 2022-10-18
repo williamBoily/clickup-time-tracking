@@ -54,7 +54,11 @@ function printTotalTime(durationInMs: number) {
 		const clickup = new ClickupClient(process.env.CLICKUP_API_PERSONNAL_TOKEN ?? '');
 		const result = await clickup.getTimeEntriesWithinDateRange(process.env.CLICKUP_TEAM_ID ?? '', {start_date: startDate.valueOf(), end_date: endDate.valueOf()});
 		printDayRange(startDate, endDate);
-		result.data.forEach(timeEntry => {
+		
+		result.data.sort((a, b) => {
+			return a.start - b.start;
+		})
+		.forEach(timeEntry => {
 			const start = new Date(parseInt(timeEntry.start, 10));
 			const end = new Date(parseInt(timeEntry.end, 10));
 			totalTimeInMs += (end.valueOf() - start.valueOf());
