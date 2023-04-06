@@ -2,6 +2,20 @@ import 'dotenv/config'; // this will load the .env in process.env
 
 import ClickupClient from './ClickupClient';
 
+const COLORS = {
+	default: '[0m',
+	red: '[31m',
+	green: '[32m'
+}
+
+function print(text: string, color?: string){
+	if(color === null){
+		console.log(text);
+	}else{
+		console.log(`\x1b${color}${text}\x1b${COLORS.default}`);
+	}
+}
+
 function customDateTimeFormatter(date: Date): string {
 	const YMD = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
 	const time = customTimeFormatter(date);
@@ -48,7 +62,7 @@ function formatDuration(durationInMs: number){
 
 function printTotalTime(durationInMs: number) {
 	const duration = formatDuration(durationInMs);
-	console.log(`total time: ${duration}`);
+	print(`total time: ${duration}`, COLORS.green);
 }
 
 function stringDateYYYYMMDDtoDate(stringDate: string): Date {
@@ -80,18 +94,29 @@ function stringDateYYYYMMDDtoDate(stringDate: string): Date {
 		
 		result.data.sort((a, b) => {
 			return a.start - b.start;
-		})
-		.forEach(timeEntry => {
+		});
+
+		for (let index = 0; index < result.data.length; index++) {
+			const timeEntry = result.data[index];
 			const start = new Date(parseInt(timeEntry.start, 10));
 			const end = new Date(parseInt(timeEntry.end, 10));
 			totalTimeInMs += (end.valueOf() - start.valueOf());
 			printTimeRange(start, end, timeEntry.task?.name ?? 'no task linked');
-		});
 
+			if(result.data[index + 1]){
+				const nextTimeEntry = result.data[index + 1];
+				const nextStart = new Date(parseInt(nextTimeEntry.start, 10));
+				
+				if( (end.valueOf() - nextStart.valueOf()) >= (60 * 1000)){
+					print("Time entry overlaps", COLORS.red);
+				}
+			}
+		}
+		
 		printTotalTime(totalTimeInMs);
 		
 	} catch (error) {
-		console.error('Script Error. Something went wrong...');
+		print("Script Error. Something went wrong...", COLORS.red);
 		console.error(error);
 	}
 })();
